@@ -26,20 +26,30 @@ if ($result->num_rows > 0) {
     $update->bind_param("ssi", $token, $expira, $userId);
     $update->execute();
 
-    $link = "localhost/PromoSearch/redefinir_senha.php?token=$token";
+    $appUrl = rtrim(getenv('APP_URL') ?: 'http://localhost:8000', '/');
+    $link = "$appUrl/redefinir_senha.php?token=$token";
+
+    $smtpHost = getenv('SMTP_HOST') ?: 'smtp.gmail.com';
+    $smtpPort = getenv('SMTP_PORT') ?: '587';
+    $smtpUsername = getenv('SMTP_USERNAME');
+    $smtpPassword = getenv('SMTP_PASSWORD');
 
     $mail = new PHPMailer(true);
 
     try {
         $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'babbingtonnjr@gmail.com';
-        $mail->Password = 'ejjq glnl lzwz nzlc';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
+        if (!$smtpUsername || !$smtpPassword) {
+            throw new Exception('Configure SMTP_USERNAME e SMTP_PASSWORD para enviar e-mails.');
+        }
 
-        $mail->setFrom('seuemail@gmail.com', 'PromoSearch');
+        $mail->Host = $smtpHost;
+        $mail->SMTPAuth = true;
+        $mail->Username = $smtpUsername;
+        $mail->Password = $smtpPassword;
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = (int) $smtpPort;
+
+        $mail->setFrom($smtpUsername, 'PromoSearch');
         $mail->addAddress($emailDestino);
 
         $mail->CharSet = 'UTF-8';
